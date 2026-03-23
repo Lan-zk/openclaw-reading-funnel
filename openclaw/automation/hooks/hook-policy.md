@@ -1,13 +1,16 @@
 # Hook Policy
 
-Hooks may:
+## Hooks May
 
-- write logs
-- emit summaries
-- append lightweight traces
+- write execution traces
+- append operational logs
+- emit lightweight alerts
+- trigger post-run summaries
 
-Hooks may not:
+## Hooks May Not
 
-- become the canonical state machine
+- mutate canonical StoryPack truth directly
 - bypass StoryPack version checks
+- bypass queue snapshot semantics
 - bypass delivery idempotency rules
+- become the canonical state machine for review or delivery
