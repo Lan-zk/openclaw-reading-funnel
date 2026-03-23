@@ -1,0 +1,11 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+.worktrees/
+worktrees/
+tmp/
+var/
+*.log
+openclaw/agents/editorial/memory/editorial/approved-storypacks/*.md
+!openclaw/agents/editorial/memory/editorial/approved-storypacks/.gitkeep
