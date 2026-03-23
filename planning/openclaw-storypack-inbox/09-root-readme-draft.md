@@ -1,3 +1,12 @@
+# Root README Draft: OpenClaw StoryPack Inbox
+
+Generated: 2026-03-23  
+Status: Draft  
+Purpose: draft the repository root `README.md` that OpenClaw and human operators should read first
+
+## Draft README
+
+````markdown
 # OpenClaw StoryPack Inbox
 
 OpenClaw StoryPack Inbox is a personal editorial system for information overload.
@@ -168,3 +177,31 @@ The planning pack already defines:
 - repo file skeleton
 
 Implementation should follow those docs instead of re-deciding the architecture from scratch.
+````
+
+## README Design Notes
+
+This draft is intentionally optimized for both humans and OpenClaw:
+
+- top section explains what the system does
+- bootstrap section explains what OpenClaw should discover
+- path map makes structure inferable
+- environment section isolates what remains manual
+- validation section makes success legible
+
+## What This README Still Expects From Later Work
+
+Later implementation should replace placeholders with actual repo paths once the runtime files exist:
+
+- real `openclaw/` subtree
+- real bootstrap docs
+- real skill directories
+- real validation flow
+
+## Recommended Next Step
+
+The next document after this should be:
+
+- `10-bootstrap-doc-drafts.md`
+
+That file should draft the contents of `bootstrap/install.md`, `bootstrap/validate.md`, `bootstrap/env.example`, and `bootstrap/repo-map.md`.
