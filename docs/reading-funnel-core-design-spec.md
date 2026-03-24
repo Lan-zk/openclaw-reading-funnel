@@ -2,32 +2,32 @@
 
 ## 1. 项目定位
 
-Reading Funnel Core 是一个本地“漏斗式阅读预处理内核”。
+Reading Funnel Core 当前阶段不是“一个完整系统”，而是一组围绕漏斗式阅读工作流上游阶段构建的 repo-local skills。
 
-它的任务不是直接生成日报、消息推送或知识卡片，而是在真正的精选、精读、沉淀、投递发生之前，先把外部输入整理成后续系统可以继续处理的结构化对象。当前阶段不把 `OpenClaw` 当作业务中心，也不把投递和沉淀当作核心目标。
+这些 skills 的目标是：
 
-本项目的主叙事固定为：
+- 接入外部来源
+- 把原始输入转成结构化候选对象
+- 将结果固化为本地产物文件
+- 让后续 agent 可以通过产物路径继续编排下游 skill
+
+本项目当前阶段的主叙事固定为：
 
 `SourceAdapter -> RawSourceItem -> CandidateItem -> ReadingCandidate`
 
-这条链路的含义是：
-
-- 先用适配器接入来源
-- 再保留来源特有信息
-- 再统一映射成单条候选事实对象
-- 最后聚合成待后续处理的阅读候选对象
+但这个模型表达的是 **skill 产物契约**，不是先验数据库中心模型。
 
 ## 2. Phase 1 目标与边界
 
 ### 2.1 Phase 1 目标
 
-Phase 1 只做上游漏斗预处理，目标是：
+Phase 1 只做上游漏斗预处理，交付的是一组最小可用 skills：
 
 1. 从 `FreshRSS` 真实读取内容
-2. 生成本地 `RawSourceItem` 快照
-3. 生成本地 `CandidateItem` 快照
-4. 生成本地 `ReadingCandidate` 快照
-5. 记录一次运行的统计、失败和聚合结果
+2. 生成本地 `RawSourceItem` 产物
+3. 生成本地 `CandidateItem` 产物
+4. 生成本地 `ReadingCandidate` 产物
+5. 生成 run 级元数据与失败报告
 
 ### 2.2 Phase 1 不做什么
 
@@ -39,109 +39,231 @@ Phase 1 明确排除：
 - 用户反馈回流
 - 正文抓取
 - 以 `OpenClaw` 为核心的业务编排
+- 共享 Python 通用库
 - 强制全多 Agent 运行时
 
 ### 2.3 FreshRSS 的角色
 
-`FreshRSS` 是 Phase 1 的第一个真实来源实现，而不是整个系统的永久中心。
+`FreshRSS` 是 Phase 1 的第一个真实来源实现，而不是整个体系的永久中心。
 
-这样做的原因是：
+因此，本阶段把 `FreshRSS` 定义为第一个 `SourceAdapter`，而不是唯一入口。后续如果接 GitHub、新闻网站、博客、X、Reddit，也应走新的来源 skill，而不是强行经过 `FreshRSS`。
 
-- 当前 MVP 需要真实数据源来验证可行性
-- 后续还会扩展到 GitHub、新闻网站、博客、X、Reddit 等来源
-- 如果现在就把 `FreshRSS` 等同于核心模型，未来会被 RSS 字段和聚合池语义卡住
+## 3. Skill-first 架构
 
-因此，本阶段把 `FreshRSS` 定义为第一个 `SourceAdapter`，而不是唯一入口。
+### 3.1 Skill 是第一等交付单元
 
-## 3. 核心对象契约
+当前阶段的第一等交付单元是 skill，不是共享 Python 库，也不是单体系统模块。
 
-当前阶段需要 5 个核心对象，外加两类显式失败记录。
+每个 skill 必须自带：
 
-### 3.1 身份、幂等与快照规则
+- `SKILL.md`
+- 自己的执行脚本
+- 明确的输入产物契约
+- 明确的输出产物契约
+- 明确的失败产物契约
 
-本阶段采用“两层身份”：
+skills 之间默认不共享 Python 通用实现。
 
-- 逻辑身份：跨 run 稳定，用于去重、重放和 upsert 判断
-- 运行快照：以 `run_id` 为边界，用于保留每次运行的输入、输出和失败现场
+### 3.2 技术实现边界
 
-固定规则如下：
+Python 脚本只是某个具体 skill 的执行脚本，服务于该 skill 本身，而不是一个公共运行时层。
 
-- `run_id`：每次完整运行唯一生成一次，全局唯一，不复用
-- `raw_item_id`：来源条目的逻辑身份，跨 run 稳定
-- `candidate_item_id`：由 `raw_item_id` 派生，跨 run 稳定
-- `reading_candidate_id`：run 级聚类快照身份，不要求跨 run 稳定
+这意味着：
 
-固定范围如下：
+- 可以重复实现小段逻辑
+- 不优先抽取共享 Python 基础库
+- 共享的应当是对象契约和文件格式，而不是代码
 
-- `RawSourceItem` 的持久化主键视为 `(run_id, raw_item_id)`
-- `CandidateItem` 的持久化主键视为 `(run_id, candidate_item_id)`
-- `ReadingCandidate` 的持久化主键视为 `(run_id, reading_candidate_id)`
+### 3.3 Skill 之间如何通信
 
-这样设计的原因是：
+skill 之间通过本地持久化文件通信。
 
-- 相同来源条目在不同 run 中应复用逻辑身份
-- 每次运行仍要保留独立快照，支持回放和差异检查
-- 聚类结果天然依赖当次输入集合，因此 `ReadingCandidate` 先按 run 级快照处理
+默认通信方式：
 
-“可重放”在本阶段的明确含义是：
+- 上游 skill 产出机器可读 `json` 主产物与 `step-manifest.json`
+- agent 在编排时把这些产物路径传给下游 skill
+- 下游 skill 只依赖输入文件与契约，不依赖上游 skill 的进程或内存对象
+- `md` 仅作为可选的人类可读伴随产物，不参与下游准入
 
-- 给定一个历史 `run_id`，系统可以从该 run 持久化的 `RawSourceItem` 快照重新执行规范化、评分、去重和聚类
-- 重放不会依赖当时的在线来源状态
-- 相同输入的重放必须生成相同的 `candidate_item_id`
-- 聚类结果应在相同规则和相同输入下得到相同输出
+### 3.4 产物文件要求
 
-为了让“相同规则”可执行，本阶段还必须为每次 run 记录：
+每个产物文件至少应包含：
 
+- `schema_name`
+- `schema_version`
+- `generated_at`
+- `produced_by_skill`
+- `run_id`
+- `payload`
+
+如果某个 skill 输出的是目录而不是单文件，该目录也必须至少包含：
+
+- 一个主产物文件
+- 一个 step 级 machine-readable manifest
+
+### 3.5 推荐目录布局
+
+当前阶段推荐按 run 和 skill 双层落盘：
+
+```text
+runs/
+  {run_id}/
+    source-fetch/
+    candidate-normalize/
+    candidate-score/
+    dedup-cluster/
+    reading-candidate-build/
+    run-review/
+```
+
+每个 skill 目录至少包含：
+
+- 一个主产物文件
+- 一个 `step-manifest.json`
+- 可选的人类可读 `md` 报告
+
+### 3.6 通用 JSON 顶层结构
+
+所有机器可读 JSON 产物都必须使用固定顶层结构，不允许只留下裸数组。
+
+#### 集合类主产物
+
+适用于：
+
+- `raw-source-items.json`
+- `candidate-items.normalized.json`
+- `candidate-items.scored.json`
+- `reading-candidates.json`
+
+顶层结构固定为：
+
+- `schema_name`
+- `schema_version`
+- `generated_at`
+- `produced_by_skill`
+- `run_id`
+- `item_count`
+- `items[]`
+
+#### 结果类 manifest / report
+
+适用于：
+
+- `step-manifest.json`
+- `source-fetch-report.json`
+- `cluster-review.json`
+- `run-review.json`
+
+顶层结构固定为：
+
+- `schema_name`
+- `schema_version`
+- `generated_at`
+- `produced_by_skill`
+- `run_id`
+- `step_name`
+- `step_status`
+- `continue_recommended`
+- `input_artifacts[]`
+- `output_artifacts[]`
+- `counts`
+- `issues[]`
+- `payload`
+
+其中：
+
+- `step_status` 固定枚举为：`SUCCEEDED`、`PARTIAL_SUCCESS`、`FAILED`
+- `continue_recommended` 固定为布尔值
+- `input_artifacts[]` 固定元素结构为：
+  - `artifact_name`
+  - `path`
+  - `schema_name`
+  - `schema_version`
+  - `required`
+- `output_artifacts[]` 固定元素结构为：
+  - `artifact_name`
+  - `path`
+  - `schema_name`
+  - `schema_version`
+  - `artifact_role`
+  - `consumable_by_downstream`
+  - `required_for_next`
+
+`artifact_role` 固定枚举为：
+
+- `PRIMARY`
+- `AUXILIARY`
+- `FAILURE_REPORT`
+- `HUMAN_REPORT`
+
+### 3.7 Run Manifest 固定结构
+
+`run-manifest.json` 是 run 级总索引，必须使用固定结构。
+
+顶层字段固定为：
+
+- `schema_name`
+- `schema_version`
+- `generated_at`
+- `produced_by_skill`
+- `run_id`
+- `run_status`
 - `pipeline_version`
 - `ruleset_version`
 - `source_config_hash`
+- `step_results[]`
+- `artifact_index[]`
+- `counts`
+- `issues[]`
 
-重放默认绑定到原始 run 记录的这三个值；如果规则版本变化，应视为新 run，不视为同一次重放。
+其中：
 
-### 3.2 SourceAdapter
+- `run_status` 固定枚举为：`SUCCEEDED`、`PARTIAL_SUCCESS`、`FAILED`
+- `step_results[]` 固定元素结构为：
+  - `step_name`
+  - `step_status`
+  - `continue_recommended`
+  - `step_manifest_path`
+- `artifact_index[]` 固定元素结构为：
+  - `artifact_name`
+  - `path`
+  - `produced_by_skill`
+  - `schema_name`
+  - `schema_version`
+  - `artifact_role`
+  - `consumable_by_downstream`
+  - `required_for_next`
 
-`SourceAdapter` 是接入层边界，不是持久化对象。
+`run_status` 计算规则固定为：
 
-它的职责是：
+- 所有必要 step 均为 `SUCCEEDED`，且存在可消费主产物时，`run_status=SUCCEEDED`
+- 至少一个 step 为 `PARTIAL_SUCCESS`，且仍存在可消费主产物时，`run_status=PARTIAL_SUCCESS`
+- 不存在可消费主产物，或链路在必要 step 上终止时，`run_status=FAILED`
 
-- 与某一类来源通信
-- 拉取一个批次的原始内容
-- 返回统一格式的 `RawSourceItem`
-- 返回来源级别的运行结果
+### 3.8 空结果语义
 
-最小接口语义：
+当前阶段禁止用“文件缺失”表达空结果。
 
-- `fetch(batch_request) -> RawSourceItem[]`
-- `get_run_status() -> source-level status`
+统一规则：
 
-`batch_request` 在 Phase 1 固定为时间窗模式，而不是 cursor 模式。
+- 如果某一步成功执行但没有可产出的业务对象，仍然要产出主 JSON 文件
+- 该文件中的 `item_count` 必须为 `0`
+- `step-manifest.json` 中必须明确写出 `step_status`
+- 是否允许下游继续，由 `continue_recommended` 和准入规则决定
 
-建议字段：
+## 4. 核心对象契约
 
-- `source_ids[] | null`
-- `window_start`
-- `window_end`
-- `limit_per_source`
-- `order = published_at_desc`
-- `replay = false`
+当前阶段保留 4 个核心业务对象，加上 1 个 run 对象。
 
-固定约束：
-
-- 同一次 run 必须记录精确的 `window_start` 与 `window_end`
-- 相同时间窗允许重复拉取；重复拉取应复用同样的 `raw_item_id`
-- 单来源失败不应中断其他来源；只要至少一个来源成功并完成原始落盘，本次 run 可进入后续阶段
-- “其他来源在安全时继续处理”的定义是：失败来源不再进入当前 run 的后续链路，成功来源继续进入下游
-
-Phase 1 只实现 `FreshRSSAdapter`。
-
-### 3.3 RawSourceItem
+### 4.1 RawSourceItem
 
 `RawSourceItem` 是来源条目的本地镜像对象。
 
-它必须满足两个要求：
+它用于：
 
-- 尽量保留来源特有字段，不在这一层过度压平
-- 支持重放、排障和后续规范化
+- 保留来源特有字段
+- 支撑后续规范化
+- 支撑回放与排障
 
 建议字段：
 
@@ -159,16 +281,9 @@ Phase 1 只实现 `FreshRSSAdapter`。
 - `raw_payload`
 - `run_id`
 
-逻辑身份生成规则：
+### 4.2 CandidateItem
 
-- 优先使用 `hash(source_adapter_type, source_id, origin_item_id)`
-- 如果来源缺少稳定 `origin_item_id`，降级为 `hash(source_adapter_type, source_id, canonicalized_url, published_at, normalized_title)`
-
-这个规则要求 `raw_item_id` 在相同来源条目被重复拉取时保持稳定。
-
-### 3.4 CandidateItem
-
-`CandidateItem` 是预处理阶段的最小事实单元，也是“单条候选对象”的唯一统一模型。
+`CandidateItem` 是预处理阶段的最小事实单元。
 
 它代表“一条已经被清洗、标准化、可评分、可比较的候选内容”，但不承载主题级判断。
 
@@ -194,28 +309,21 @@ Phase 1 只实现 `FreshRSSAdapter`。
 - `dedup_key`
 - `run_id`
 
-逻辑身份生成规则：
+`normalize_status` 固定枚举为：
 
-- `candidate_item_id = hash(raw_item_id)`
+- `NORMALIZED`
 
-阶段写入规则：
+`filter_status` 固定枚举为：
 
-- `Candidate Normalizer` 创建同一 run 内的初始 `CandidateItem` 快照
-- `Candidate Filter + Score` 只更新同一条 `(run_id, candidate_item_id)` 快照上的评分和过滤字段
-- `Dedup + Cluster` 只补充 `dedup_key`，不把聚类引用写回 `CandidateItem`
+- `KEPT`
+- `FILTERED`
 
-字段归属固定如下：
+当前阶段固定规则：
 
-- 规范化后保证存在：`candidate_item_id`、来源字段、`canonical_url`、`normalized_title`、`summary`、`published_at`、`normalize_status`
-- 评分后保证存在：`freshness_score`、`quality_score`、`noise_flags[]`、`filter_status`
-- 去重后保证存在：`dedup_key`
+- 进入 `candidate-items.normalized.json` 的条目，`normalize_status` 必须恒为 `NORMALIZED`
+- 规范化失败条目不进入该主产物，只进入 `normalization-failures.json`
 
-状态语义固定如下：
-
-- `normalize_status`: `NORMALIZED | NORMALIZATION_FAILED`
-- `filter_status`: `KEPT | FILTERED`
-
-### 3.5 ReadingCandidate
+### 4.3 ReadingCandidate
 
 `ReadingCandidate` 是聚合后的待后续处理对象。
 
@@ -238,39 +346,9 @@ Phase 1 只实现 `FreshRSSAdapter`。
 - `needs_review`
 - `run_id`
 
-输出不变量固定如下：
+### 4.4 PipelineRun
 
-- 每个 `normalize_status = NORMALIZED` 且 `filter_status = KEPT` 的 `CandidateItem`，在同一 run 中必须落入且只落入一个 `ReadingCandidate`
-- `filter_status = FILTERED` 的 `CandidateItem` 不参与 `ReadingCandidate`
-- 单条候选也要生成 singleton `ReadingCandidate`
-- `cluster_type` 固定为：`SINGLETON | EXACT_DUP | SIMILAR_CLUSTER`
-- `cluster_confidence` 对 `SINGLETON` 和 `EXACT_DUP` 固定为 `1.0`
-- `merge_reason` 至少说明所使用的合并依据，不能只给空结论
-
-`needs_review` 固定语义：
-
-- 仅当 `cluster_type = SIMILAR_CLUSTER` 且 `cluster_confidence` 低于阈值时为 `true`
-- `needs_review = true` 代表后续必须进入人工复核点
-
-低置信度阈值固定规则：
-
-- Phase 1 默认阈值为 `0.75`
-- 阈值属于 `ruleset_version` 管辖范围
-- 如果未来改为可配置项，变更后的阈值仍必须被纳入新的 `ruleset_version`
-
-装配规则固定如下：
-
-- `primary_candidate_item_id`：取同一 `ReadingCandidate` 内 `quality_score` 最高的 `CandidateItem`；若并列，按 `published_at` 更新者优先；若仍并列，按 `candidate_item_id` 字典序最小者优先
-- `canonical_url`：取 `primary_candidate_item_id` 对应的 `canonical_url`
-- `display_title`：取 `primary_candidate_item_id` 对应的 `title`
-- `display_summary`：取 `primary_candidate_item_id` 对应的 `summary`
-- `aggregate_score`：取该 `ReadingCandidate` 内所有 `CandidateItem.quality_score` 的最大值
-
-### 3.6 PipelineRun
-
-`PipelineRun` 用于描述一次完整运行。
-
-它不是业务对象，但它是可追踪、可重放、可审核的基础。
+`PipelineRun` 用于描述一次完整技能编排运行。
 
 建议字段：
 
@@ -281,386 +359,354 @@ Phase 1 只实现 `FreshRSSAdapter`。
 - `started_at`
 - `finished_at`
 - `source_window`
-- `raw_items_count`
-- `source_failures_count`
-- `candidate_items_count`
-- `normalization_failures_count`
-- `reading_candidates_count`
-- `filtered_count`
-- `needs_review_count`
 - `status`
+- `artifact_index`
 
-`PipelineRun.status` 固定为：
+其中：
 
-- `SUCCEEDED`
-- `PARTIAL_SUCCESS`
-- `FAILED`
+- `status` 固定枚举为：`SUCCEEDED`、`PARTIAL_SUCCESS`、`FAILED`
+- `artifact_index` 的结构必须与 `run-manifest.json` 中的 `artifact_index[]` 保持一致
 
-`PipelineRun` 同时承担“发布边界”角色：
+### 4.5 身份与快照规则
 
-- `SUCCEEDED` 和 `PARTIAL_SUCCESS` 的 run 可以被后续流程读取
-- `FAILED` 的 run 只保留审计和排障价值，不进入默认下游消费视图
+当前阶段采用“两层身份”：
 
-## 4. 模块边界
+- 逻辑身份：跨 run 稳定，用于去重和重放判断
+- 运行快照：以 `run_id` 为边界，用于保留每次技能编排运行的输入、输出和失败现场
 
-### 4.1 Source Adapter
+固定规则如下：
 
-职责：
+- `run_id`：每次完整运行唯一生成一次
+- `raw_item_id`：来源条目的逻辑身份，跨 run 稳定
+- `candidate_item_id`：由 `raw_item_id` 派生，跨 run 稳定
+- `reading_candidate_id`：run 级聚类快照身份，不要求跨 run 稳定
 
-- 连接来源系统
-- 拉取原始内容
-- 生成 `RawSourceItem`
-- 报告来源级失败
+当前阶段的“可重放”含义是：
 
-边界：
+- 给定一个历史 `run_id` 的原始产物目录，可以不重新访问在线来源，重新执行后续 skills
+- 重放绑定原始 run 记录的 `pipeline_version`、`ruleset_version` 和 `source_config_hash`
 
-- 不做规范化
-- 不做聚合
-- 不隐藏来源失败
+## 5. Skill 清单与职责
 
-### 4.2 Raw Intake Store
+当前阶段的每个 skill 都必须同时产出：
 
-职责：
+- 主业务产物
+- 至少一个机器可读的 `step-manifest.json`
+- 如有需要，再附加 Markdown 报告供人阅读
 
-- 保存原始内容
-- 保存来源级 intake 结果
-- 保存来源级错误或空批次信息
+agent 编排时以 `step-manifest.json` 为首要准入依据，不解析 Markdown。
 
-写入归属固定如下：
+### 5.1 `source-fetch`
 
-- `Raw Intake Store` 是 `RawSourceItem` 快照的唯一持久化归属
-- 它也是 `SourceFetchRecord` 的唯一持久化归属
-- 它不写 `CandidateItem`、`ReadingCandidate` 或 `PipelineRun`
-
-边界：
-
-- 不修改业务判断
-- 不直接承担去重和聚合逻辑
-
-### 4.3 Candidate Normalizer
+模式：`Tool Wrapper`
 
 职责：
 
-- 将 `RawSourceItem` 映射为 `CandidateItem`
-- 统一 URL、标题、时间、来源标识
-- 生成基础结构化信号
+- 调用 `FreshRSS`
+- 读取指定时间窗内容
+- 产出 `RawSourceItem` 文件
+- 产出来源级抓取结果文件
 
-写入归属固定如下：
+输入：
 
-- `Candidate Normalizer` 创建 `CandidateItem` 初始快照
-- 它负责写入 `normalize_status`
-- 规范化失败时，它必须写入 `NormalizationFailureRecord`，并保留 `origin_raw_item_id` 与失败原因
+- 配置文件
+- 时间窗参数
 
-边界：
+输出：
 
-- 不做主题聚合
-- 不做终局编辑判断
-- 不抓正文
+- `raw-source-items.json`
+- `source-fetch-report.json`
+- `step-manifest.json`
 
-### 4.4 Candidate Filter + Score
+准入规则：
 
-职责：
+- 这是首个 skill，不依赖上游 manifest
+- 如果至少有一个来源成功拉取，`continue_recommended=true`
+- 如果所有来源均失败，`continue_recommended=false`
+- 部分失败允许继续，但必须在 `source-fetch-report.json` 与 `step-manifest.json` 中显式标出
 
-- 在单条候选级别做基础过滤
-- 生成质量、新鲜度、噪音等评分信号
+### 5.2 `candidate-normalize`
 
-写入归属固定如下：
-
-- `Candidate Filter + Score` 更新既有 `CandidateItem` 快照
-- 它负责写入 `freshness_score`、`quality_score`、`noise_flags[]` 和 `filter_status`
-- 它不创建新的候选对象类型
-
-边界：
-
-- 不做聚类
-- 不输出最终结果给人类
-
-### 4.5 Dedup + Cluster
+模式：`Pipeline`
 
 职责：
 
+- 读取 `RawSourceItem`
+- 生成 `CandidateItem`
+- 记录规范化失败
+
+输入：
+
+- `raw-source-items.json`
+
+输出：
+
+- `candidate-items.normalized.json`
+- `normalization-failures.json`
+- `step-manifest.json`
+
+准入规则：
+
+- 只接受 `source-fetch/step-manifest.json`
+- 仅当 `source-fetch` 的 `continue_recommended=true` 且 `raw-source-items.json` 存在时继续
+- 规范化失败的条目写入 `normalization-failures.json`
+- 成功规范化的条目进入主产物，失败条目不得进入主产物
+
+### 5.3 `candidate-score`
+
+模式：`Tool Wrapper`
+
+职责：
+
+- 读取规范化后的 `CandidateItem`
+- 写入质量、新鲜度和噪音评分
+- 写入过滤结果
+
+输入：
+
+- `candidate-items.normalized.json`
+
+输出：
+
+- `candidate-items.scored.json`
+- `step-manifest.json`
+
+准入规则：
+
+- 只接受 `candidate-normalize/step-manifest.json`
+- 处理 `candidate-items.normalized.json` 中的全部条目
+- 由于规范化失败条目不会进入主产物，因此评分阶段不再接触失败条目
+
+### 5.4 `dedup-cluster`
+
+模式：`Pipeline`
+
+职责：
+
+- 读取评分后的 `CandidateItem`
 - 先做精确去重
-- 再做轻量相似聚合
-- 产出聚类理由和置信度
+- 再做轻量相似聚类
+- 标记 `needs_review`
 
-写入归属固定如下：
+输入：
 
-- `Dedup + Cluster` 更新 `CandidateItem.dedup_key`
-- 它产出聚类结果供 `ReadingCandidate Builder` 装配
-- 它不直接持久化 `ReadingCandidate`
+- `candidate-items.scored.json`
 
-边界：
+输出：
 
-- 优先避免误合并
-- 低置信度情况显式保留，不静默吞掉
+- `cluster-plan.json`
+- `cluster-review.json`
+- `cluster-review-report.md`
+- `step-manifest.json`
 
-### 4.6 ReadingCandidate Builder
+准入规则：
 
-职责：
+- 只接受 `candidate-score/step-manifest.json`
+- 仅处理 `filter_status=KEPT` 的条目
+- `filter_status!=KEPT` 的条目不得进入聚类
+- 低置信度 cluster 仍可进入 `cluster-plan.json`，但必须在 `cluster-review.json` 与 `cluster-review-report.md` 中标记 `needs_review`
 
-- 将聚类结果装配成统一的 `ReadingCandidate`
-- 指定主条目、展示标题、展示摘要和聚类说明
+### 5.5 `reading-candidate-build`
 
-写入归属固定如下：
-
-- `ReadingCandidate Builder` 是 `ReadingCandidate` 的唯一持久化归属
-- 它负责落盘 singleton、exact dedup 和 similar cluster 三类聚类快照
-- 它必须严格遵守 `primary_candidate_item_id`、`canonical_url`、`display_title`、`display_summary` 和 `aggregate_score` 的固定装配规则
-
-边界：
-
-- 不生成日报
-- 不生成投递内容
-- 不写入外部编排系统
-
-### 4.7 Run Orchestrator
+模式：`Generator`
 
 职责：
 
-- 协调一次完整运行
-- 串联模块顺序
-- 写出 `PipelineRun`
+- 读取聚类方案
+- 生成确定性的 `ReadingCandidate`
 
-固定流程：
+输入：
 
-`SourceAdapter -> Raw Intake Store -> Candidate Normalizer -> Candidate Filter + Score -> Dedup + Cluster -> ReadingCandidate Builder`
+- `cluster-plan.json`
+- `candidate-items.scored.json`
 
-写入归属固定如下：
+输出：
 
-- `Run Orchestrator` 只写 `PipelineRun`
-- 它负责汇总各阶段计数与最终状态
-- 它不代替其他模块写原始条目、候选条目或聚类对象
+- `reading-candidates.json`
+- `step-manifest.json`
 
-边界：
+准入规则：
 
-- 只编排，不拥有业务真相
-- 不把临时执行上下文当作持久状态来源
+- 只接受 `dedup-cluster/step-manifest.json`
+- 可以消费 `needs_review=true` 的 cluster
+- 但这类 cluster 生成的 `ReadingCandidate` 必须保留 `needs_review=true`
+- 如果 `cluster-plan.json` 为空，也必须产出空的 `reading-candidates.json`
 
-## 5. 失败语义与可见性
+### 5.6 `run-review`
+
+模式：`Reviewer`
+
+职责：
+
+- 汇总 run 级结果
+- 产出运行报告
+- 显式列出失败、过滤和低置信度对象
+
+输入：
+
+- 全部上游产物路径
+
+输出：
+
+- `run-manifest.json`
+- `run-review.json`
+- `run-report.md`
+
+准入规则：
+
+- 只要存在任一上游 `step-manifest.json`，就应运行
+- 它不决定中间步骤是否继续，只负责最终汇总
+- 它产出的 `run-manifest.json` 是 run 级总索引，不替代各步的 `step-manifest.json`
+
+## 6. 失败语义与可见性
 
 当前阶段必须遵守“失败可见，不静默跳过”的原则。
 
-### 5.1 拉取失败
+### 6.1 失败必须作为产物落地
 
-要求：
+失败不能只存在于日志或进程退出码里。
 
-- 来源级失败必须记录
-- 失败不能伪装成“没有内容”
-- 单来源失败时，其他成功来源继续处理
-- 如果所有来源都失败，整次 run 标记为 `FAILED`
+至少要落成文件的失败包括：
 
-来源级状态固定为：
+- 来源级抓取失败
+- 规范化失败
+- 聚类低置信度
 
-- `SUCCEEDED`
-- `EMPTY`
-- `FAILED`
+### 6.2 失败产物
 
-`SourceFetchRecord` 为 run 级显式记录，最小字段固定为：
+失败产物固定为：
 
-- `run_id`
-- `source_adapter_type`
-- `source_id`
-- `status`
-- `fetched_count`
-- `error_code | null`
-- `error_message | null`
+- `source-fetch-report.json`
+- `normalization-failures.json`
+- `cluster-review.json`
+- `cluster-review-report.md`
+- `run-review.json`
+- `run-report.md`
 
-### 5.2 规范化失败
+### 6.3 下游可见性
 
-要求：
+默认下游读取：
 
-- 失败条目必须可追踪回 `RawSourceItem`
-- 失败原因必须留存
-- 失败不应直接消失
+- 成功产物
+- 带 `needs_review` 标记的部分成功产物
 
-计数规则：
+下游不默认读取：
 
-- `normalization_failures_count` 统计所有 `normalize_status = NORMALIZATION_FAILED` 的条目
-- 规范化失败的条目不进入评分、去重和聚类
+- 缺少上游主产物的失败 run
 
-`NormalizationFailureRecord` 为 run 级显式记录，最小字段固定为：
+agent 编排时必须以当前上游 skill 的 `step-manifest.json` 作为直接准入依据。
 
-- `run_id`
-- `raw_item_id`
-- `candidate_item_id | null`
-- `failure_stage = NORMALIZATION`
-- `error_code`
-- `error_message`
+`run-manifest.json` 只负责：
 
-### 5.3 聚类低置信度
+- 汇总本次 run 的所有产物索引
+- 给后续人工复盘或更高层编排器做 run 级浏览
+- 标记哪些产物可被继续消费
 
-要求：
+它不负责替代中间技能之间的逐步准入判断。
 
-- 聚类逻辑保守
-- 不确定时宁可分开，也不应误合并
-- 低置信度对象应标记 `needs_review`
+### 6.4 机器可读与人类可读的分工
 
-计数规则：
+当前阶段的规则是：
 
-- `needs_review_count` 统计所有 `needs_review = true` 的 `ReadingCandidate`
-- 低置信度聚类不会让 run 失败，但会让 run 至少为 `PARTIAL_SUCCESS`
+- `json` 负责 agent 编排、准入判断和自动消费
+- `md` 负责人类阅读、审计和解释
 
-### 5.4 运行可追踪、可重放
+因此：
 
-要求：
+- `cluster-review-report.md` 不能单独承担准入判断
+- `run-report.md` 不能单独承担准入判断
+- 所有与继续/停止决策相关的信息，都必须同时存在于对应的 `json` manifest/report 中
 
-- 每次运行都有唯一 `run_id`
-- 每个对象能追踪到本次运行
-- 一次 run 的输入、输出、失败统计可回放
+### 6.5 Step 准入的固定判断字段
 
-状态判定规则：
+agent 不得自行发明准入逻辑。
 
-- 当至少一个来源成功、所有必需持久化都成功、且不存在 `needs_review` 时，`PipelineRun.status = SUCCEEDED`
-- 当至少一个来源成功，但存在来源失败、规范化失败或 `needs_review` 时，`PipelineRun.status = PARTIAL_SUCCESS`
-- 当原始落盘失败、没有任何成功来源，或 `PipelineRun` 自身无法完成写入时，`PipelineRun.status = FAILED`
+每一步是否继续，固定只看上游 `step-manifest.json` 中这 4 个字段：
 
-过滤计数规则：
+- `step_status`
+- `continue_recommended`
+- `output_artifacts[]`
+- `issues[]`
 
-- `filtered_count` 只统计 `filter_status = FILTERED` 的 `CandidateItem`
+固定判断规则：
 
-本阶段的重放边界：
+- 若 `continue_recommended=false`，默认停止
+- 若缺少 `artifact_role=PRIMARY` 且 `consumable_by_downstream=true` 的输出，默认停止
+- 若存在 `artifact_role=FAILURE_REPORT`，记录但不必然停止
+- 是否继续到下一步，以该下一步自己的准入规则为最终判定
 
-- 支持从历史 `RawSourceItem` 快照重放
-- 不要求重放阶段重新访问 FreshRSS
-- 重放必须绑定原始 run 记录的 `pipeline_version`、`ruleset_version` 和 `source_config_hash`
+## 7. Agent 编排方式
 
-下游可见性规则：
+### 7.1 先 skill，后 agent
 
-- 默认下游读取 `SUCCEEDED` 与 `PARTIAL_SUCCESS` 的 run
-- `PARTIAL_SUCCESS` 的 `ReadingCandidate` 可以被读取，但必须保留 `needs_review` 标记
-- `FAILED` run 的中间产物可以留在存储中，但默认不进入后续消费视图
+当前阶段不先做“一个系统再拆 agent”，而是先做 skills，再让 agent 组合这些 skills。
 
-## 6. Skill 设计映射
+### 7.2 Agent 如何调用
 
-本项目采用《Agent-Skill-五种设计模式》里的组合思路，但不把所有模块都实现成完全自治 agent。
+agent 编排时只需要：
 
-### 6.1 Tool Wrapper
+1. 调用上游 skill
+2. 拿到上游产物路径
+3. 把产物路径传给下游 skill
+4. 根据上游 `step-manifest.json` 判断是否继续
 
-适用：
+每个 step manifest 至少要告诉 agent：
 
-- `SourceAdapter`
-- 评分规则与来源配置
+- 本步是否执行成功
+- 是否建议继续
+- 哪些输出文件是下游允许消费的主产物
+- 哪些问题只需人工关注，不阻断链路
 
-原因：
-
-- 封装来源协议和策略规则最合适
-- 让来源差异留在适配层
-
-### 6.2 Pipeline
-
-适用：
-
-- `Run Orchestrator`
-- `Candidate Normalizer`
-- `Dedup + Cluster`
-
-原因：
-
-- `Run Orchestrator` 承担最严格的全链路顺序控制
-- `Candidate Normalizer` 与 `Dedup + Cluster` 是 pipeline-shaped 子阶段
-- 不应跳步
-- 每步结果都应可解释
-- `Reviewer` 可以作为 pipeline 的检查点插入，而不是替代 pipeline 本身
-
-### 6.3 Generator
-
-适用：
-
-- `ReadingCandidate Builder`
-
-原因：
-
-- 其职责是稳定装配统一结构
-- 不是开放式生成
-
-### 6.4 Reviewer
-
-适用：
-
-- 聚类质量检查
-- spec 审查
-
-原因：
-
-- 可以把“检查什么”与“如何执行”分开
-- 便于后续扩展质量审查标准
-
-## 7. 多 Agent 演进策略
+### 7.3 多 Agent 演进策略
 
 当前阶段不强制一开始就做成全多 Agent 运行时。
 
 原因有两点：
 
-1. 当前 Phase 1 的主流程是已知的固定流水线，更适合先保证稳定性
+1. 当前 Phase 1 的主流程是已知的固定技能链，更适合先保证稳定性
 2. 过早引入多 Agent 调度、通信和一致性语义，会放大复杂度
-
-这也符合 ADP 对 `Planning` 模式的判断：当“how”已经清楚时，固定工作流通常比动态规划更可靠。[来源](https://adp.xindoo.xyz/original/Chapter%206_%20Planning)
 
 当前阶段的正确做法是：
 
-- 先按多 Agent 友好的边界划模块
-- 再用固定编排器把它们串起来
+- 先按 skill 边界落能力
+- 再用一个 agent 或多个 agent 组合这些 skills
 - 等到确实存在职责隔离、工具隔离或并行收益时，再拆成独立 agent
 
 未来自然演进方向：
 
-- `Ingest Agent`
-- `Normalize Agent`
-- `Cluster Agent`
-- `Audit Agent`
+- `Ingest Agent`：编排 `source-fetch`
+- `Normalize Agent`：编排 `candidate-normalize` 与 `candidate-score`
+- `Cluster Agent`：编排 `dedup-cluster` 与 `reading-candidate-build`
+- `Audit Agent`：编排 `run-review`
 
-其依据来自 ADP 的 `Multi-Agent Collaboration`：多 Agent 最适合处理可分解、需要专门工具或专门能力的子问题。[来源](https://adp.xindoo.xyz/original/Chapter%207_%20Multi-Agent%20Collaboration)
-
-## 8. 并行化策略
-
-Phase 1 默认按顺序串行跑完整条主链路。
-
-只有在子任务彼此独立时才考虑并行化。初始推荐的可并行区只有：
-
-- 多来源拉取
-- 批量候选评分
-- 多条独立聚类候选的质量检查
-
-这也符合 ADP 对 `Parallelization` 的约束：并行化最适合独立任务，不应把有直接依赖的步骤硬并发。[来源](https://adp.xindoo.xyz/original/Chapter%203_%20Parallelization)
-
-## 9. Human-in-the-Loop 边界
-
-当前阶段没有面向终端用户的人工反馈闭环，但系统内部仍应保留 HITL 接缝。
-
-具体体现在：
-
-- 聚类低置信度对象不自动吞并
-- `needs_review` 明确标记人工复核点
-- 任何高风险聚类的最终裁决都属于人工复核，不属于子 agent
-- 子 agent 审查只作为预审支持，不等同于 Human-in-the-Loop 本身
-
-这符合 ADP 对 `Human-in-the-Loop` 的要求：在复杂、模糊或高风险判断上，应保留人类审查与纠偏能力。[来源](https://adp.xindoo.xyz/original/Chapter%2013_%20Human-in-the-Loop)
-
-## 10. OpenClaw 边界
+## 8. OpenClaw 边界
 
 `OpenClaw` 不是当前 Phase 1 的业务中心。
 
 它在后续阶段的定位是：
 
 - 消费本地产物
-- 负责编排
-- 负责投递
-- 负责与外部工作流集成
+- 编排 skills
+- 把上游产物路径传给下游 skill
+- 负责后续投递与外部工作流集成
 
 它不应在当前阶段承担：
 
 - 主业务对象定义
-- 核心状态管理
+- 共享 Python 通用运行时
 - 候选内容的事实判定
 - 聚类和装配的业务真相
 
-## 11. 文档层验收标准
+## 9. 文档层验收标准
 
 本设计成立时，应满足：
 
 - 不再使用旧 `StoryPack/OpenClaw-first` 叙事作为当前 Phase 1 核心
 - 明确采用 `SourceAdapter -> RawSourceItem -> CandidateItem -> ReadingCandidate`
 - `FreshRSS` 被表述为第一个 adapter，而不是永久中心
-- `OpenClaw` 被表述为后置适配层，而不是当前业务内核
-- Phase 1 的目标和非目标边界清晰
-- 多 Agent 被定义为演进方向，而不是当前强制实现方式
+- 第一等交付单元明确为 skills，而不是单体系统模块
+- skill 之间通过本地持久化文件通信
+- 每个 skill 都产出 machine-readable `step-manifest.json`
+- agent 编排通过产物路径串联 skills
+- agent 不需要解析 Markdown 就能完成继续/停止判断
+- `OpenClaw` 被表述为后置 skill 编排层，而不是当前业务内核

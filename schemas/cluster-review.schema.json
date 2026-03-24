@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_name", "schema_version", "generated_at", "produced_by_skill", "run_id", "step_name", "step_status", "continue_recommended", "input_artifacts", "output_artifacts", "counts", "issues", "payload"],
+  "properties": {
+    "schema_name": { "const": "cluster-review" },
+    "schema_version": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "produced_by_skill": { "const": "dedup-cluster" },
+    "run_id": { "type": "string" },
+    "step_name": { "const": "dedup-cluster" },
+    "step_status": { "enum": ["SUCCEEDED", "PARTIAL_SUCCESS", "FAILED"] },
+    "continue_recommended": { "type": "boolean" },
+    "input_artifacts": { "type": "array" },
+    "output_artifacts": { "type": "array" },
+    "counts": { "type": "object" },
+    "issues": { "type": "array" },
+    "payload": { "type": "object" }
+  },
+  "additionalProperties": false
+}

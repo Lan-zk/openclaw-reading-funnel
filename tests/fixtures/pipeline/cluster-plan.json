@@ -1,0 +1,28 @@
+{
+  "schema_name": "cluster-plan",
+  "schema_version": "1.0.0",
+  "generated_at": "2026-03-24T00:00:00Z",
+  "produced_by_skill": "dedup-cluster",
+  "run_id": "fixture-run",
+  "item_count": 2,
+  "items": [
+    {
+      "cluster_id": "cluster-1",
+      "candidate_item_ids": ["candidate-1001", "candidate-1002"],
+      "primary_candidate_item_id": "candidate-1002",
+      "cluster_type": "HIGH_SIMILARITY",
+      "cluster_confidence": 0.8,
+      "merge_reason": "Same hostname family, close publication time, and near-identical titles.",
+      "needs_review": true
+    },
+    {
+      "cluster_id": "cluster-2",
+      "candidate_item_ids": ["candidate-1003"],
+      "primary_candidate_item_id": "candidate-1003",
+      "cluster_type": "SINGLETON",
+      "cluster_confidence": 1.0,
+      "merge_reason": "No exact or high-similarity match found.",
+      "needs_review": false
+    }
+  ]
+}

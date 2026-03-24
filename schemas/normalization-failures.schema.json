@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_name", "schema_version", "generated_at", "produced_by_skill", "run_id", "step_name", "step_status", "continue_recommended", "input_artifacts", "output_artifacts", "counts", "issues", "payload"],
+  "properties": {
+    "schema_name": { "const": "normalization-failures" },
+    "schema_version": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "produced_by_skill": { "const": "candidate-normalize" },
+    "run_id": { "type": "string" },
+    "step_name": { "const": "candidate-normalize" },
+    "step_status": { "enum": ["SUCCEEDED", "PARTIAL_SUCCESS", "FAILED"] },
+    "continue_recommended": { "type": "boolean" },
+    "input_artifacts": { "type": "array" },
+    "output_artifacts": { "type": "array" },
+    "counts": { "type": "object" },
+    "issues": { "type": "array" },
+    "payload": {
+      "type": "object",
+      "required": ["failures"],
+      "properties": {
+        "failures": { "type": "array" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

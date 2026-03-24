@@ -1,0 +1,6 @@
+{
+  "base_url": "https://rss.example.com/api/greader.php",
+  "feed_ids": [],
+  "limit_per_run": 100,
+  "request_timeout_seconds": 30
+}

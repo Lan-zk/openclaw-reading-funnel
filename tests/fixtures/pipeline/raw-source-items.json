@@ -1,0 +1,55 @@
+{
+  "schema_name": "raw-source-items",
+  "schema_version": "1.0.0",
+  "generated_at": "2026-03-24T00:00:00Z",
+  "produced_by_skill": "source-fetch",
+  "run_id": "fixture-run",
+  "item_count": 3,
+  "items": [
+    {
+      "raw_item_id": "tag:google.com,2005:reader/item/1001",
+      "source_adapter_type": "freshrss",
+      "source_id": "feed/http://example.com/feed.xml",
+      "source_name": "Example Tech",
+      "origin_item_id": "tag:google.com,2005:reader/item/1001",
+      "title": "OpenAI launches new API guide",
+      "url": "https://example.com/articles/openai-api?utm_source=rss",
+      "summary": "A practical guide to the new API release with examples and migration notes for developers.",
+      "author": "Alice",
+      "published_at": "2024-03-24T09:00:00Z",
+      "fetched_at": "2024-03-24T10:00:00Z",
+      "raw_payload": {},
+      "run_id": "fixture-run"
+    },
+    {
+      "raw_item_id": "tag:google.com,2005:reader/item/1002",
+      "source_adapter_type": "freshrss",
+      "source_id": "feed/http://news.example.net/rss.xml",
+      "source_name": "Builder News",
+      "origin_item_id": "tag:google.com,2005:reader/item/1002",
+      "title": "OpenAI launches new API guide",
+      "url": "https://news.example.net/post/openai-api-guide",
+      "summary": "Another coverage of the same launch with similar details and takeaways for builders.",
+      "author": "Bob",
+      "published_at": "2024-03-24T09:05:00Z",
+      "fetched_at": "2024-03-24T10:00:00Z",
+      "raw_payload": {},
+      "run_id": "fixture-run"
+    },
+    {
+      "raw_item_id": "tag:google.com,2005:reader/item/1003",
+      "source_adapter_type": "freshrss",
+      "source_id": "feed/http://example.com/feed.xml",
+      "source_name": "Example Tech",
+      "origin_item_id": "tag:google.com,2005:reader/item/1003",
+      "title": "Small weekly links",
+      "url": "https://example.com/weekly-links#section",
+      "summary": "Short.",
+      "author": "",
+      "published_at": "2024-03-23T09:00:00Z",
+      "fetched_at": "2024-03-24T10:00:00Z",
+      "raw_payload": {},
+      "run_id": "fixture-run"
+    }
+  ]
+}

@@ -13,10 +13,11 @@
    - 是否偏离《信息过载时代，我的漏斗式阅读工作流》的核心漏斗思路
    - 是否偏离《Agent-Skill-五种设计模式》的 skill 设计原则
    - 是否偏离 ADP 中关于 `Planning`、`Parallelization`、`Multi-Agent Collaboration`、`Human-in-the-Loop` 的适用边界
+   - 是否符合“skill-first + file-based handoff + per-skill scripts”的新约束
 
 2. 工程可实施性审查
-   - 核心对象边界是否清楚
-   - 模块职责是否冲突
+   - skill 边界是否清楚
+   - 输入输出文件契约是否清楚
    - 失败语义是否足够明确
    - 文档是否足以支撑后续实现计划
 
@@ -33,7 +34,7 @@
 
 状态：`PASS`
 
-本次审查采用两名子 agent 并行复审：
+本次最终版本已经通过两类复审：
 
 - 偏离审查：`PASS`
 - 工程可实施性审查：`PASS`
@@ -42,35 +43,70 @@
 
 ### 1. 偏离审查
 
-最终结论：`PASS`
+结果：`PASS`
 
-结论说明：
+结论：
 
-- spec 保持了“漏斗上游预处理内核”的主叙事，没有回到旧的 `StoryPack/OpenClaw-first` 方案
-- `FreshRSS` 被正确约束为第一个 `SourceAdapter`
-- 多 Agent 被正确表述为后续演进方向，而不是当前强制运行方式
-- `Human-in-the-Loop` 边界已修正为人工最终裁决，子 agent 仅作为预审支持
+- 当前版本与《信息过载时代，我的漏斗式阅读工作流》一致：
+  - 本阶段被严格限定在漏斗式阅读工作流的上游预处理层
+  - 不提前扩展到 Daily Review、沉淀、投递等后续阶段
+- 当前版本与《Agent-Skill-五种设计模式》一致：
+  - `source-fetch` / `candidate-score` 采用 `Tool Wrapper`
+  - `candidate-normalize` / `dedup-cluster` 采用 `Pipeline`
+  - `reading-candidate-build` 采用 `Generator`
+  - `run-review` 采用 `Reviewer`
+- 当前版本与 ADP 中 `Planning`、`Parallelization`、`Multi-Agent Collaboration`、`Human-in-the-Loop` 的适用边界一致：
+  - 主流程仍是固定技能链
+  - 只在明确独立处保留并行空间
+  - 多 agent 仍是后续演进方向
+  - 高风险判断仍保留人工复核
+- 当前版本与新增约束一致：
+  - `skill-first`
+  - `file-based handoff`
+  - `per-skill scripts`
+  - agent 通过上游产物路径编排下游 skill
+  - 不把 Python 当共享通用层
 
 ### 2. 工程可实施性审查
 
-最终结论：`PASS`
+结果：`PASS`
 
-结论说明：
+结论：
 
-- 对象身份、幂等和快照边界已明确
-- 写入归属已明确分配到具体模块
-- 失败记录、运行状态和下游可见性规则已明确
-- 重放语义已绑定规则版本与来源配置快照
-- `ReadingCandidate` 的装配规则已具备确定性
+- `step-manifest.json` 已是固定契约：
+  - 字段、枚举、`input_artifacts[]` / `output_artifacts[]` 结构、以及 agent 的固定判断规则都已明确
+- `run-manifest.json` / `artifact_index[]` 已足够固定：
+  - run 级字段、状态枚举、`step_results[]`、`artifact_index[]` 结构和 `run_status` 计算规则都已明确
+  - 不再与 step-manifest 冲突
+- `normalize_status` 语义已一致：
+  - 主产物中的 `CandidateItem` 只允许 `NORMALIZED`
+  - 失败条目只进入 `normalization-failures.json`
+  - 评分阶段不再接触失败条目
+- `filter_status` 已固定枚举，`candidate-score -> dedup-cluster` 的机器可读准入规则已闭合
+- `json` 与 `md` 的分工清楚：
+  - `json` 负责编排和准入
+  - `md` 仅供人读，不参与下游判断
+- 以当前精度，文档已经足以直接支撑 implementation plan：
+  - skill 边界、文件契约、失败产物、准入规则、目录布局和 run/step 两级编排接口都已闭合
 
 ### 3. 偏离项列表
 
-无未解决偏离项。
+无。
 
 ### 4. 需要修改的具体段落或决策
 
-无剩余必须修改项。
+无必须修改项。
 
 ### 5. 最终说明
 
-当前 spec 与 goals 文档已通过偏离审查和工程审查，可以作为后续实现计划的基线文档继续使用。
+当前 spec 与 goals 文档已经完成从 `system-first/module-first` 到 `skill-first` 的重写。
+
+最终可确认的核心结论是：
+
+- 第一等交付单元是 repo-local skills
+- skills 通过机器可读 `json` 主产物和 `step-manifest.json` 交接
+- 每个 skill 自带脚本，不依赖共享 Python 通用层
+- agent 通过上游产物路径编排下游 skill
+- `OpenClaw` 仍是后置编排与集成层，不是当前 Phase 1 的业务内核
+
+因此，这份 spec 可以作为下一步 implementation plan 的直接输入。
