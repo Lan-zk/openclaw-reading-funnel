@@ -12,7 +12,7 @@
 - 中间对象如何保持稳定，不在实现中漂移
 - 最终 `DailyReviewIssue` 的字段分别由哪一步产生
 
-本文档是 [reading-funnel-global-implementation-guide.md](./reading-funnel-global-implementation-guide.md) 的下钻设计。
+本文档是 [reading-funnel-global-implementation-guide.md](../../global/reading-funnel-global-implementation-guide.md) 的下钻设计。
 如果后续继续展开其他 workflow，建议沿用相同模板。
 
 ## 2. 设计范围

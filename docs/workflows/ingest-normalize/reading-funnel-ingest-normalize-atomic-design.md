@@ -11,7 +11,7 @@
 - 每个能力明确不做什么
 - 空结果、失败结果、失败记录分别如何定义
 
-本文档是 [reading-funnel-global-implementation-guide.md](./reading-funnel-global-implementation-guide.md) 的下钻设计。
+本文档是 [reading-funnel-global-implementation-guide.md](../../global/reading-funnel-global-implementation-guide.md) 的下钻设计。
 如果后续继续展开其他 workflow，建议沿用相同模板。
 
 ## 2. 设计范围

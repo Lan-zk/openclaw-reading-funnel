@@ -70,11 +70,24 @@ project/
 |   `-- generate-long-cycle-assets/
 |-- schemas/
 |-- docs/
-|   |-- reading-funnel-global-implementation-guide.md
-|   |-- reading-funnel-object-contracts.md
-|   |-- reading-funnel-orchestration-rules.md
-|   |-- reading-funnel-evaluation-rules.md
-|   `-- reading-funnel-review-checklists.md
+|   |-- global/
+|   |   |-- reading-funnel-design-index.md
+|   |   |-- reading-funnel-global-implementation-guide.md
+|   |   |-- reading-funnel-object-contracts.md
+|   |   |-- reading-funnel-orchestration-rules.md
+|   |   |-- reading-funnel-evaluation-rules.md
+|   |   `-- reading-funnel-review-checklists.md
+|   `-- workflows/
+|       |-- ingest-normalize/
+|       |   `-- reading-funnel-ingest-normalize-atomic-design.md
+|       |-- digest-candidates/
+|       |   `-- reading-funnel-digest-candidates-atomic-design.md
+|       |-- compose-daily-review/
+|       |   `-- reading-funnel-compose-daily-review-atomic-design.md
+|       |-- curate-retain/
+|       |   `-- reading-funnel-curate-retain-atomic-design.md
+|       `-- generate-long-cycle-assets/
+|           `-- reading-funnel-generate-long-cycle-assets-atomic-design.md
 |-- scripts/
 |   |-- run_reading_funnel_local.ps1
 |   `-- build_pipeline_run.py
@@ -89,7 +102,8 @@ project/
 
 - `skills/` 只放顶层 workflow skill
 - `schemas/` 是对象契约的 source of truth
-- `docs/` 只放架构、契约、流程、评估、评审规则
+- `docs/global/` 放总览、架构、契约、流程、评估、评审规则
+- `docs/workflows/` 按 workflow 分目录存放各自原子能力设计
 - `scripts/` 只放非业务顶层的编排脚本与 run 汇总脚本
 - 不再把“原子能力”直接暴露成顶层 skill
 
@@ -899,4 +913,3 @@ project/
 如果后续只记住一句话，就记住这一句：
 
 > 顶层按工作流暴露，底层按原子能力实现，长期价值判断保留给人，反馈只做轻量回流。
-
