@@ -14,6 +14,13 @@
 本文档是 [reading-funnel-global-implementation-guide.md](../../global/reading-funnel-global-implementation-guide.md) 的下钻设计。
 如果后续继续展开其他 workflow，建议沿用相同模板。
 
+当前 workflow 的配套文档：
+
+- [reading-funnel-ingest-normalize-object-contracts.md](./reading-funnel-ingest-normalize-object-contracts.md)
+- [reading-funnel-ingest-normalize-orchestration-rules.md](./reading-funnel-ingest-normalize-orchestration-rules.md)
+- [reading-funnel-ingest-normalize-evaluation-rules.md](./reading-funnel-ingest-normalize-evaluation-rules.md)
+- [reading-funnel-ingest-normalize-adapter-and-normalization-rules.md](./reading-funnel-ingest-normalize-adapter-and-normalization-rules.md)
+
 ## 2. 设计范围
 
 本文档只覆盖一个 workflow：

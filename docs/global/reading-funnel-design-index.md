@@ -36,17 +36,23 @@
 #### `ingest-normalize`
 
 - [reading-funnel-ingest-normalize-atomic-design.md](../workflows/ingest-normalize/reading-funnel-ingest-normalize-atomic-design.md)
+- [reading-funnel-ingest-normalize-object-contracts.md](../workflows/ingest-normalize/reading-funnel-ingest-normalize-object-contracts.md)
+- [reading-funnel-ingest-normalize-orchestration-rules.md](../workflows/ingest-normalize/reading-funnel-ingest-normalize-orchestration-rules.md)
+- [reading-funnel-ingest-normalize-evaluation-rules.md](../workflows/ingest-normalize/reading-funnel-ingest-normalize-evaluation-rules.md)
+- [reading-funnel-ingest-normalize-adapter-and-normalization-rules.md](../workflows/ingest-normalize/reading-funnel-ingest-normalize-adapter-and-normalization-rules.md)
 
 作用：
 
 - 定义信息接入与基础归一化的原子能力边界
 - 明确抓取、字段映射、来源快照落盘、基础归一化、失败 ledger 的关系
+- 固定该 workflow 当前阶段的对象契约、编排规则、评估规则和 adapter / 归一化细则
 
 适用问题：
 
 - 不同来源的实际抓取落在哪一步
 - 空结果与失败如何分离
 - 来源接入阶段的中间对象有哪些
+- 第一版 skill 应该接受什么输入、输出什么产物、怎样处理失败和 replay
 
 #### `digest-candidates`
 
@@ -142,7 +148,7 @@
 
 说明：
 
-当前仓库里，原子能力设计已经补齐，但对象契约、编排规则、评估规则的下钻文档还需要继续完善。
+当前仓库里，`ingest-normalize` 已经补齐原子能力设计、对象契约、编排规则、评估规则和 adapter / 归一化规则；其他 workflow 的下钻文档还需要继续完善。
 
 ## 4. 各文档的职责边界
 
