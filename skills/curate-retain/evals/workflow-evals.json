@@ -1,0 +1,20 @@
+{
+  "happy_path": {
+    "description": "上游候选合法，人工提交 KEEP 决策，最终产出 retention decision、knowledge asset 和 preference signals。"
+  },
+  "queue_only_path": {
+    "description": "只构建 read queue，没有任何人工正式决策输入，workflow 仍成功。"
+  },
+  "decision_only_path": {
+    "description": "新增正式决策，但没有 KEEP，knowledge asset 与 preference signal 可以为空。"
+  },
+  "partial_success_path": {
+    "description": "部分 KEEP 的后置派生失败，但正式决策已落盘，其余对象继续成功产出。"
+  },
+  "failure_path": {
+    "description": "输入文件无法解析，或关键 artifact 无法写出，workflow 返回 FAILED。"
+  },
+  "ambiguous_path": {
+    "description": "DEFER 或 NEEDS_RECHECK 成为正式决策落盘，但不被误记为失败。"
+  }
+}
