@@ -57,10 +57,15 @@
 #### `digest-candidates`
 
 - [reading-funnel-digest-candidates-atomic-design.md](../workflows/digest-candidates/reading-funnel-digest-candidates-atomic-design.md)
+- [reading-funnel-digest-candidates-object-contracts.md](../workflows/digest-candidates/reading-funnel-digest-candidates-object-contracts.md)
+- [reading-funnel-digest-candidates-orchestration-rules.md](../workflows/digest-candidates/reading-funnel-digest-candidates-orchestration-rules.md)
+- [reading-funnel-digest-candidates-evaluation-rules.md](../workflows/digest-candidates/reading-funnel-digest-candidates-evaluation-rules.md)
+- [reading-funnel-digest-candidates-heuristics-and-scoring-rules.md](../workflows/digest-candidates/reading-funnel-digest-candidates-heuristics-and-scoring-rules.md)
 
 作用：
 
 - 定义候选收窄、正文抽取、质量检查、噪音过滤、摘要生成、候选装配的原子能力边界
+- 固定该 workflow 当前阶段的对象契约、编排规则、评估规则和启发式 / 评分细则
 - 明确 `FILTERED`、`NEEDS_REVIEW`、`FAILED` 三者分离
 
 适用问题：
@@ -68,14 +73,19 @@
 - Digest 这一层到底在什么时候正式“过滤”
 - 偏好信号能不能参与最终裁决
 - 哪一步负责生成最终 `DigestCandidate` 字段
+- 第一版 skill 应该接受什么输入、输出什么产物、怎样处理 review、failure 和 replay
 
 #### `compose-daily-review`
 
 - [reading-funnel-compose-daily-review-atomic-design.md](../workflows/compose-daily-review/reading-funnel-compose-daily-review-atomic-design.md)
+- [reading-funnel-compose-daily-review-object-contracts.md](../workflows/compose-daily-review/reading-funnel-compose-daily-review-object-contracts.md)
+- [reading-funnel-compose-daily-review-orchestration-rules.md](../workflows/compose-daily-review/reading-funnel-compose-daily-review-orchestration-rules.md)
+- [reading-funnel-compose-daily-review-evaluation-rules.md](../workflows/compose-daily-review/reading-funnel-compose-daily-review-evaluation-rules.md)
 
 作用：
 
 - 定义日报事件归并、栏目建议、主题提炼、重要性评估、深挖识别、结构编排、成稿渲染的原子能力边界
+- 固定该 workflow 当前阶段的对象契约、编排规则和评估规则
 - 明确只有 `compose_issue_structure` 可以做最终入选裁决
 
 适用问题：
@@ -83,6 +93,7 @@
 - 日报面对的是“候选”还是“事件包”
 - render 阶段是否还能重新做编辑判断
 - 固定栏目如何在中间步骤里保持不漂移
+- 第一版 skill 应该接受什么输入、输出什么产物、怎样处理 review、failure 和 replay
 
 #### `curate-retain`
 
@@ -148,7 +159,7 @@
 
 说明：
 
-当前仓库里，`ingest-normalize` 已经补齐原子能力设计、对象契约、编排规则、评估规则和 adapter / 归一化规则；其他 workflow 的下钻文档还需要继续完善。
+当前仓库里，`ingest-normalize`、`digest-candidates` 与 `compose-daily-review` 已经补齐当前阶段实现所需的下钻文档；其他 workflow 的下钻文档还需要继续完善。
 
 ## 4. 各文档的职责边界
 
