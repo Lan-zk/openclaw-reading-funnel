@@ -1,0 +1,4 @@
+interface:
+  display_name: "Compose Daily Review"
+  short_description: "Compose digest candidates into daily review issues, editorial review items, and readable run artifacts."
+  default_prompt: "Use $compose-daily-review to group digest candidates into a daily review issue with sections, themes, review items, and Markdown artifacts."

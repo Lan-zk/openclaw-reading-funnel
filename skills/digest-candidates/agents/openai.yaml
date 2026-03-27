@@ -1,0 +1,4 @@
+interface:
+  display_name: "Digest Candidates"
+  short_description: "Transform normalized candidates into digest candidates, review items, and digest run artifacts."
+  default_prompt: "Use $digest-candidates to deduplicate, cluster, score, and assemble normalized candidates into digest artifacts."

@@ -1,0 +1,14 @@
+{
+  "happy_path": [
+    "Digest 候选经过事件归并、栏目建议、重要性评估和结构编排后生成 1 份正式日报"
+  ],
+  "ambiguous_path": [
+    "低置信度事件包进入 editorial-review，而不是被误记为失败"
+  ],
+  "failure_path": [
+    "输入文件缺失或无法解析时 workflow 为 FAILED"
+  ],
+  "empty_result_path": [
+    "输入为空或所有事件被省略时主产物为空数组，但 workflow 仍为 SUCCEEDED"
+  ]
+}
