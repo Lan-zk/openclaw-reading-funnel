@@ -41,6 +41,19 @@ artifacts/ingest-normalize/<run_id>/
 `-- step-manifest.json
 ```
 
+当前阶段存储格式固定为 JSON 文件：
+
+- `source-entries.json`
+- `normalized-candidates.json`
+- `ingest-failures.json`
+- `ingest-report.json`
+- `step-manifest.json`
+
+当前阶段不使用：
+
+- CSV 作为主产物存储格式
+- SQLite 作为 workflow 运行存储
+
 ## 3. 运行顺序
 
 ### 3.1 固定步骤

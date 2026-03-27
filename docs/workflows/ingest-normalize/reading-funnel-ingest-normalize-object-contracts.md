@@ -219,6 +219,8 @@
 
 - 在 `ingest-normalize` 范围内，`SourceEntry.status` 当前只允许 `INGESTED`
 - 抓取失败、转换失败、映射失败不创建 `SourceEntry`
+- `source_entry_id` 应由稳定逻辑键生成，建议基于 `source_id + origin_item_id`
+- `source_entry_snapshot_id` 应表示单次快照，建议使用 `UUIDv7` 或 `timestamp + source_entry_id`
 
 ### 4.7 `NormalizedCandidate`
 
@@ -247,6 +249,7 @@
 
 - 在 `ingest-normalize` 的主产物中，只输出 `normalize_status = NORMALIZED` 的对象
 - 归一化失败不写入主产物；失败事实写入 ledger
+- `normalized_candidate_id` 应保持稳定，当前阶段建议基于 `source_entry_id` 生成
 
 ### 4.8 `IngestFailureRecord`
 
@@ -339,12 +342,16 @@
 | `step-manifest.json` | `IngestStepManifest` |
 | `ingest-report.json` | `IngestReport` |
 
+当前阶段存储约束：
+
+- `ingest-normalize` 的主存储格式固定为 JSON 文件
+- 不使用 CSV 作为主产物存储格式
+- 不使用 SQLite 作为当前阶段的对象与产物存储
+
 ## 6. 当前阶段明确不定的内容
 
 本文档当前不固定以下细节：
 
-- 最终使用文件存储还是数据库存储
-- `source_entry_id` 和 `normalized_candidate_id` 的具体生成算法
 - `url_fingerprint` 的具体哈希算法
 - `details` 字段的完整调试结构
 

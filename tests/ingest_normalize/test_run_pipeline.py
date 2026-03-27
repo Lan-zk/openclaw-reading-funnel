@@ -14,9 +14,11 @@ TEST_DIR = Path(__file__).resolve().parent
 if str(TEST_DIR) not in sys.path:
     sys.path.insert(0, str(TEST_DIR))
 
-import run
 from ingest_normalize import pipeline as pipeline_module
-from support import workspace_tempdir
+from tests.ingest_normalize.support import load_ingest_run_module, workspace_tempdir
+
+
+run = load_ingest_run_module("ingest_run_pipeline_tests")
 
 
 class RunPipelineTests(unittest.TestCase):

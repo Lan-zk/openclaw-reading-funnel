@@ -1,0 +1,4 @@
+interface:
+  display_name: "Generate Long Cycle Assets"
+  short_description: "Generate weekly or topic long-cycle assets, author review items, and JSON run artifacts from retained knowledge and daily review issues."
+  default_prompt: "Use $generate-long-cycle-assets to turn retained knowledge assets and daily review issues into weekly and topic long-cycle artifacts with author review output."

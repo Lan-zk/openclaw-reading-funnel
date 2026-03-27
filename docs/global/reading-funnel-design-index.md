@@ -113,17 +113,23 @@
 #### `generate-long-cycle-assets`
 
 - [reading-funnel-generate-long-cycle-assets-atomic-design.md](../workflows/generate-long-cycle-assets/reading-funnel-generate-long-cycle-assets-atomic-design.md)
+- [reading-funnel-generate-long-cycle-assets-object-contracts.md](../workflows/generate-long-cycle-assets/reading-funnel-generate-long-cycle-assets-object-contracts.md)
+- [reading-funnel-generate-long-cycle-assets-orchestration-rules.md](../workflows/generate-long-cycle-assets/reading-funnel-generate-long-cycle-assets-orchestration-rules.md)
+- [reading-funnel-generate-long-cycle-assets-evaluation-rules.md](../workflows/generate-long-cycle-assets/reading-funnel-generate-long-cycle-assets-evaluation-rules.md)
+- [reading-funnel-generate-long-cycle-assets-signal-and-writability-rules.md](../workflows/generate-long-cycle-assets/reading-funnel-generate-long-cycle-assets-signal-and-writability-rules.md)
 
 作用：
 
 - 定义周期素材汇总、热点主题累计、长期信号识别、周刊生成、专题可写性判断、专题素材包装配的原子能力边界
 - 明确长周期产物只能来自已有沉淀，不能重新抓热点
+- 固定该 workflow 当前阶段的对象契约、编排规则、评估规则和评分细则
 
 适用问题：
 
 - 周刊和专题是不是两条不同产线
 - 哪一步正式生成 `WEEKLY` 或 `TOPIC` 资产
 - 长周期产物能否回头补外部事实
+- 专题可写性与长期信号如何评分、如何进 review
 
 ## 3. 推荐阅读顺序
 

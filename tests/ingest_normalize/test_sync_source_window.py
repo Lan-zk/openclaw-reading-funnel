@@ -10,7 +10,10 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from ingest_normalize.models import SourceDescriptor
-import run
+from tests.ingest_normalize.support import load_ingest_run_module
+
+
+run = load_ingest_run_module("ingest_run_sync_window_tests")
 
 
 class SyncSourceWindowTests(unittest.TestCase):

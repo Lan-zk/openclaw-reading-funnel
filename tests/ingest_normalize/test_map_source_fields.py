@@ -10,7 +10,10 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from ingest_normalize.models import RawFeedItem, SourceDescriptor
-import run
+from tests.ingest_normalize.support import load_ingest_run_module
+
+
+run = load_ingest_run_module("ingest_run_map_fields_tests")
 
 
 class MapSourceFieldsTests(unittest.TestCase):

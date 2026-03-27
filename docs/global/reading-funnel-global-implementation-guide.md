@@ -199,8 +199,12 @@ project/
 状态枚举：
 
 - `INGESTED`
-- `FETCH_FAILED`
-- `FILTERED_AT_SOURCE`
+
+说明：
+
+- `SourceEntry` 只表示已经成功落盘的来源条目快照。
+- 抓取失败、转换失败、映射失败不创建 `SourceEntry`，统一写入 `IngestFailureRecord[]`。
+- 如果后续需要表达来源侧过滤，再单独补充状态，不在当前阶段提前引入。
 
 ### 5.2 NormalizedCandidate
 
@@ -446,6 +450,7 @@ project/
 
 - `discover_sources`
 - `sync_source_window`
+- `fetch_source_items`
 - `convert_to_feed`
 - `map_source_fields`
 - `persist_source_entries`
@@ -454,9 +459,11 @@ project/
 
 ### 成功定义
 
-- 至少拉到一个有效来源
-- 至少产出一个 `NormalizedCandidate`
-- 来源失败被显式记录
+- 至少有一个来源被成功执行，或本轮调用明确指定为空运行
+- 主产物与辅助产物成功写出
+- 来源级失败被显式记录到 `IngestFailureRecord[]`
+- `normalized-candidates.json` 允许为空；空结果记为成功，不记为失败
+- 只有系统级失败导致主产物、`step-manifest.json` 或 `ingest-report.json` 无法形成时，才判定该 workflow 为 `FAILED`
 
 ## 6.2 digest-candidates
 
@@ -492,6 +499,7 @@ project/
 ### 辅助产物
 
 - `digest-review.json`
+- `digest-failures.json`
 - `digest-report.md`
 - `step-manifest.json`
 
