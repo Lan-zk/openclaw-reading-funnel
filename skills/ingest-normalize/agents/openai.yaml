@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ingest Normalize"
+  short_description: "Ingest configured sources into source entries, normalized candidates, and JSON run artifacts."
+  default_prompt: "Use $ingest-normalize to sync configured RSS or HTTP-like sources into normalized JSON artifacts."

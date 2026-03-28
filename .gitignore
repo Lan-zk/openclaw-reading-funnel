@@ -9,3 +9,7 @@ var/
 *.log
 openclaw/agents/editorial/memory/editorial/approved-storypacks/*.md
 !openclaw/agents/editorial/memory/editorial/approved-storypacks/.gitkeep
+runs/
+skills/*/.venv/
+**/__pycache__/
+.pytest_cache/

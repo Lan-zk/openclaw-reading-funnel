@@ -1,0 +1,41 @@
+{
+  "sources": [
+    {
+      "source_id": "rss-example",
+      "source_name": "Example RSS",
+      "adapter_type": "RSS",
+      "enabled": true,
+      "endpoint": "https://example.com/feed.xml",
+      "fetch_policy": {
+        "default_window_hours": 24,
+        "request_timeout_seconds": 15,
+        "page_limit": 1,
+        "item_limit": 50
+      }
+    },
+    {
+      "source_id": "custom-http-example",
+      "source_name": "Example Custom HTTP",
+      "adapter_type": "CUSTOM_HTTP",
+      "enabled": true,
+      "endpoint": "https://example.com/api/items",
+      "fetch_policy": {
+        "default_window_hours": 24
+      }
+    },
+    {
+      "source_id": "web-page-example",
+      "source_name": "Example Web Page",
+      "adapter_type": "WEB_PAGE",
+      "enabled": true,
+      "endpoint": "https://example.com/posts/1",
+      "fetch_policy": {
+        "default_window_hours": 168,
+        "request_timeout_seconds": 20
+      },
+      "respond_with": "markdown",
+      "target_selector": "article",
+      "reader_timeout_seconds": 20
+    }
+  ]
+}

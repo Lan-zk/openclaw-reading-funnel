@@ -1,0 +1,14 @@
+{
+  "happy_path": [
+    "上游知识资产与日报 issue 共同支持长期主题时，生成 WEEKLY 和 TOPIC 资产"
+  ],
+  "author_review_path": [
+    "证据不足但存在潜力的主题进入 author-review，而不是被误记为失败"
+  ],
+  "empty_result_path": [
+    "输入合法但没有足够长周期证据时，主产物为空数组且 workflow 仍为 SUCCEEDED"
+  ],
+  "failure_path": [
+    "输入文件缺失或无法解析时 workflow 为 FAILED"
+  ]
+}

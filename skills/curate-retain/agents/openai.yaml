@@ -1,0 +1,4 @@
+interface:
+  display_name: "Curate Retain"
+  short_description: "Record formal retention decisions, build long-term knowledge assets, and derive lightweight preference signals."
+  default_prompt: "Use $curate-retain to build a read queue, persist formal retention decisions, store knowledge assets, and derive preference signals."
